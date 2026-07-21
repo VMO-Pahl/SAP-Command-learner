@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAP Command Learner</title>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background-color: #f5f5f5; 
+      color: #333;
+    }
+    #root { display: flex; min-height: 100vh; }
+    .sap-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      background-color: #f5f5f5;
+    }
+    .sap-header {
+      background-color: #003399;
+      color: white;
+      padding: 12px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sap-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .sap-badge {
+      background-color: #ff6600;
+      color: white;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .sap-content {
+      flex: 1;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .sap-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #999;
+      font-size: 14px;
+      background-color: white;
+      border-radius: 2px;
+    }
+    .sap-input:focus {
+      outline: none;
+      border-color: #003399;
+      box-shadow: 0 0 0 2px rgba(0,51,153,0.1);
+    }
+    .sap-button {
+      padding: 10px 24px;
+      background-color: #003399;
+      color: white;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 2px;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    .sap-button:hover {
+      background-color: #001f4d;
+    }
+    .sap-button:active {
+      transform: scale(0.98);
+    }
+    .sap-button.secondary {
+      background-color: #e0e0e0;
+      color: #333;
+    }
+    .sap-button.secondary:hover {
+      background-color: #d0d0d0;
+    }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .sap-card {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 2px;
+      padding: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: box-shadow 0.2s;
+    }
+    .sap-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .command-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: #003399;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+    .command-text {
+      font-family: 'Courier New', monospace;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-left: 3px solid #ff6600;
+      margin-bottom: 12px;
+      font-size: 12px;
+      line-height: 1.4;
+      word-break: break-all;
+      color: #333;
+      border-radius: 2px;
+    }
+    .command-description {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .command-score {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .score-bar {
+      width: 100px;
+      height: 4px;
+      background-color: #e0e0e0;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .score-fill {
+      height: 100%;
+      background-color: #4caf50;
+      border-radius: 2px;
+    }
+    .command-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .sap-button.icon-button {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 12px;
+      background-color: #f0f0f0;
+      color: #333;
+      border: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .sap-button.icon-button:hover {
+      background-color: #e0e0e0;
+    }
+    .sap-button.icon-button.positive {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border-color: #4caf50;
+    }
+    .sap-button.icon-button.positive:hover {
+      background-color: #c8e6c9;
+    }
+    .sap-button.icon-button.negative {
+      background-color: #ffebee;
+      color: #c62828;
+      border-color: #ef5350;
+    }
+    .sap-button.icon-button.negative:hover {
+      background-color: #ffcdd2;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+    }
+    .lexicon-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-box {
+      background-color: white;
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 2px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #003399;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+    .empty-state h3 {
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .copy-feedback {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #2e7d32;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function SAPCommandLearner() {
+      const [question, setQuestion] = useState('');
+      const [results, setResults] = useState([]);
+      const [loading, setLoading] = useState(false);
+      const [lexicon, setLexicon] = useState([]);
+      const [copyFeedback, setCopyFeedback] = useState(null);
+      const [filter, setFilter] = useState('all');
+
+      // Lade Lexikon beim Start
+      useEffect(() => {
+        loadLexicon();
+      }, []);
+
+      const loadLexicon = async () => {
+        try {
+          const result = await window.storage.get('sap-lexicon');
+          if (result) {
+            const data = JSON.parse(result.value);
+            setLexicon(data);
+          }
+        } catch (err) {
+          console.log('Lexikon geladen oder neu erstellt');
+        }
+      };
+
+      const saveLexicon = async (newLexicon) => {
+        try {
+          await window.storage.set('sap-lexicon', JSON.stringify(newLexicon));
+        } catch (err) {
+          console.error('Fehler beim Speichern:', err);
+        }
+      };
+
+      const generateCommands = async (q) => {
+        setLoading(true);
+        try {
+          const systemPrompt = `Du bist ein SAP-Experte. Der Nutzer fragt nach SAP-Befehlen.
+Antworte IMMER mit validen JSON, keine anderen Worte. Format:
+[
+  {
+    "command": "Der exakte SAP-Befehl/Transaktion",
+    "description": "Kurze Erklärung (max 1 Satz)",
+    "keywords": ["suchbegriff1", "suchbegriff2"]
+  }
+]
+Gib 2-3 relevante Befehle zurück, basierend auf dieser Frage: "${q}"`;
+
+          const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 500,
+              messages: [
+                {
+                  role: 'user',
+                  content: systemPrompt
+                }
+              ]
+            })
+          });
+
+          const data = await response.json();
+          const responseText = data.content[0].text;
+          const cleanedText = responseText.replace(/```json|```/g, '').trim();
+          const commands = JSON.parse(cleanedText);
+
+          // Kombiniere mit Lexikon
+          const combined = [...lexicon];
+          
+          commands.forEach(cmd => {
+            const existing = combined.find(c => c.command === cmd.command);
+            if (existing) {
+              existing.searches = (existing.searches || 0) + 1;
+            } else {
+              combined.push({
+                ...cmd,
+                positive: 0,
+                negative: 0,
+                searches: 1,
+                lastSearchDate: new Date().toISOString()
+              });
+            }
+          });
+
+          // Sortiere nach Score
+          const sorted = sortByScore(combined);
+          setLexicon(sorted);
+          saveLexicon(sorted);
+          setResults(commands);
+        } catch (err) {
+          console.error('Fehler:', err);
+          setResults([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const sortByScore = (commands) => {
+        return commands.sort((a, b) => {
+          const scoreA = (a.positive || 0) - (a.negative || 0);
+          const scoreB = (b.positive || 0) - (b.negative || 0);
+          return scoreB - scoreA;
+        });
+      };
+
+      const handleSearch = (e) => {
+        e.preventDefault();
+        if (question.trim()) {
+          generateCommands(question);
+        }
+      };
+
+      const handleFeedback = (command, isPositive) => {
+        const updated = lexicon.map(cmd => {
+          if (cmd.command === command) {
+            return {
+              ...cmd,
+              positive: isPositive ? (cmd.positive || 0) + 1 : cmd.positive || 0,
+              negative: !isPositive ? (cmd.negative || 0) + 1 : cmd.negative || 0
+            };
+          }
+          return cmd;
+        });
+        
+        const sorted = sortByScore(updated);
+        setLexicon(sorted);
+        saveLexicon(sorted);
+        setResults(results.map(r => {
+          if (r.command === command) {
+            return {
+              ...r,
+              positive: isPositive ? (r.positive || 0) + 1 : r.positive || 0,
+              negative: !isPositive ? (r.negative || 0) + 1 : r.negative || 0
+            };
+          }
+          return r;
+        }));
+      };
+
+      const copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text);
+        setCopyFeedback('Kopiert!');
+        setTimeout(() => setCopyFeedback(null), 2000);
+      };
+
+      const getScore = (cmd) => {
+        return (cmd.positive || 0) - (cmd.negative || 0);
+      };
+
+      const getScoreWidth = (cmd) => {
+        const score = getScore(cmd);
+        const total = (cmd.positive || 0) + (cmd.negative || 0);
+        if (total === 0) return 50;
+        return (50 + (score / total) * 50) * 100 / 100;
+      };
+
+      const filteredLexicon = filter === 'all' 
+        ? lexicon 
+        : filter === 'positive' 
+          ? lexicon.filter(c => getScore(c) > 0)
+          : lexicon.filter(c => getScore(c) < 0);
+
+      const stats = {
+        total: lexicon.length,
+        positive: lexicon.filter(c => getScore(c) > 0).length,
+        negative: lexicon.filter(c => getScore(c) < 0).length
+      };
+
+      return (
+        <div className="sap-container">
+          <div className="sap-header">
+            <h1>📚 SAP Command Learner</h1>
+            <span className="sap-badge">BETA</span>
+          </div>
+
+          <div className="sap-content">
+            <form onSubmit={handleSearch}>
+              <div className="input-group">
+                <input
+                  type="text"
+                  className="sap-input"
+                  placeholder="Z.B.: Wie erstelle ich einen neuen Benutzer? oder: Welcher Befehl für Materialanlage?"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                />
+                <button type="submit" className="sap-button">Suchen</button>
+              </div>
+            </form>
+
+            <div className="lexicon-stats">
+              <div className="stat-box">
+                <div className="stat-label">Befehle gelernt</div>
+                <div className="stat-value">{stats.total}</div>
+              </div>
+              <div className="stat-box">
+                <div className="stat-label">✓ Funktionieren</div>
+                <div className="stat-value" style={{color: '#2e7d32'}}>{stats.positive}</div>
+              </div>
+              <div className="stat-box">
+                <div className="stat-label">✗ Funktionieren nicht</div>
+                <div className="stat-value" style={{color: '#c62828'}}>{stats.negative}</div>
+              </div>
+            </div>
+
+            {results.length > 0 && (
+              <>
+                <h3 style={{marginBottom: '12px', fontSize: '14px', color: '#333'}}>
+                  Vorschläge für: <strong>"{question}"</strong>
+                </h3>
+                <div className="results-grid">
+                  {results.map((cmd, idx) => {
+                    const lexEntry = lexicon.find(l => l.command === cmd.command);
+                    return (
+                      <div key={idx} className="sap-card">
+                        <div className="command-title">{cmd.command}</div>
+                        <div className="command-text">{cmd.command}</div>
+                        <div className="command-description">{cmd.description}</div>
+                        {lexEntry && (
+                          <div className="command-score">
+                            Score: {getScore(lexEntry)} ({(lexEntry.positive || 0)} ✓ / {(lexEntry.negative || 0)} ✗)
+                            <div className="score-bar">
+                              <div className="score-fill" style={{width: `${getScoreWidth(lexEntry)}%`}}></div>
+                            </div>
+                          </div>
+                        )}
+                        <div className="command-actions">
+                          <button 
+                            className="sap-button icon-button positive"
+                            onClick={() => handleFeedback(cmd.command, true)}
+                            title="Funktioniert"
+                          >
+                            ✓ OK
+                          </button>
+                          <button 
+                            className="sap-button icon-button"
+                            onClick={() => copyToClipboard(cmd.command)}
+                            title="In Zwischenablage kopieren"
+                          >
+                            📋 Kopieren
+                          </button>
+                          <button 
+                            className="sap-button icon-button negative"
+                            onClick={() => handleFeedback(cmd.command, false)}
+                            title="Funktioniert nicht"
+                          >
+                            ✗ Nein
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {loading && <div className="loading">⏳ Befehle werden generiert...</div>}
+
+            {lexicon.length > 0 && (
+              <>
+                <h3 style={{marginBottom: '12px', fontSize: '14px', color: '#333', marginTop: '32px'}}>
+                  Dein Lexikon ({stats.total} Befehle)
+                </h3>
+                <div className="controls">
+                  <button 
+                    className={`sap-button secondary`}
+                    onClick={() => setFilter('all')}
+                    style={{backgroundColor: filter === 'all' ? '#003399' : '#e0e0e0', color: filter === 'all' ? 'white' : '#333'}}
+                  >
+                    Alle
+                  </button>
+                  <button 
+                    className={`sap-button secondary`}
+                    onClick={() => setFilter('positive')}
+                    style={{backgroundColor: filter === 'positive' ? '#2e7d32' : '#e0e0e0', color: filter === 'positive' ? 'white' : '#333'}}
+                  >
+                    ✓ Funktionieren
+                  </button>
+                  <button 
+                    className={`sap-button secondary`}
+                    onClick={() => setFilter('negative')}
+                    style={{backgroundColor: filter === 'negative' ? '#c62828' : '#e0e0e0', color: filter === 'negative' ? 'white' : '#333'}}
+                  >
+                    ✗ Fehler
+                  </button>
+                  <button 
+                    className={`sap-button secondary`}
+                    onClick={() => {
+                      if (confirm('Möchtest du das Lexikon wirklich löschen?')) {
+                        setLexicon([]);
+                        saveLexicon([]);
+                      }
+                    }}
+                  >
+                    🗑️ Zurücksetzen
+                  </button>
+                </div>
+                <div className="results-grid">
+                  {filteredLexicon.map((cmd, idx) => (
+                    <div key={idx} className="sap-card">
+                      <div className="command-title">{cmd.command}</div>
+                      <div className="command-text">{cmd.command}</div>
+                      <div className="command-description">{cmd.description}</div>
+                      <div className="command-score">
+                        Score: <strong style={{color: getScore(cmd) > 0 ? '#2e7d32' : getScore(cmd) < 0 ? '#c62828' : '#999'}}>
+                          {getScore(cmd) > 0 ? '+' : ''}{getScore(cmd)}
+                        </strong> ({(cmd.positive || 0)} ✓ / {(cmd.negative || 0)} ✗)
+                        <div className="score-bar">
+                          <div className="score-fill" style={{width: `${getScoreWidth(cmd)}%`}}></div>
+                        </div>
+                      </div>
+                      <div className="command-actions">
+                        <button 
+                          className="sap-button icon-button positive"
+                          onClick={() => handleFeedback(cmd.command, true)}
+                        >
+                          ✓
+                        </button>
+                        <button 
+                          className="sap-button icon-button"
+                          onClick={() => copyToClipboard(cmd.command)}
+                        >
+                          📋
+                        </button>
+                        <button 
+                          className="sap-button icon-button negative"
+                          onClick={() => handleFeedback(cmd.command, false)}
+                        >
+                          ✗
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {filteredLexicon.length === 0 && (
+                  <div className="empty-state">
+                    <h3>Keine Befehle in dieser Kategorie</h3>
+                    <p>Geben Sie eine Frage ein, um neue Befehle zu lernen.</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {!loading && results.length === 0 && lexicon.length === 0 && (
+              <div className="empty-state">
+                <h3>👋 Willkommen!</h3>
+                <p>Gib eine Frage ein, um SAP-Befehle zu entdecken und zu lernen.</p>
+                <p style={{marginTop: '12px', fontSize: '12px'}}>Die App merkt sich deine Bewertungen und wird mit der Zeit smarter.</p>
+              </div>
+            )}
+          </div>
+
+          {copyFeedback && <div className="copy-feedback">{copyFeedback}</div>}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<SAPCommandLearner />, document.getElementById('root'));
+  </script>
+</body>
+</html>
