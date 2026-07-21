@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SAP Command Learner</title>
-  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.min.js"></script>
-  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
@@ -242,6 +239,7 @@
       border-radius: 4px;
       font-size: 13px;
       animation: slideIn 0.3s ease-out;
+      z-index: 1000;
     }
     @keyframes slideIn {
       from {
@@ -256,10 +254,44 @@
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div class="sap-container">
+      <div class="sap-header">
+        <h1>📚 SAP Command Learner</h1>
+        <span class="sap-badge">BETA</span>
+      </div>
 
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+      <div class="sap-content">
+        <form id="searchForm">
+          <div class="input-group">
+            <input
+              type="text"
+              id="searchInput"
+              class="sap-input"
+              placeholder="Z.B.: Wie erstelle ich einen neuen Benutzer? oder: Welcher Befehl für Materialanlage?"
+              autocomplete="off"
+            />
+            <button type="submit" class="sap-button">Suchen</button>
+          </div>
+        </form>
+
+        <div id="stats" class="lexicon-stats"></div>
+
+        <div id="results"></div>
+
+        <div id="lexiconSection"></div>
+
+        <div id="feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.production.min.js"></script>
+  <script>
+    const React = window.React;
+    const ReactDOM = window.ReactDOM;
+    const { useState, useEffect } = React;
 
     function SAPCommandLearner() {
       const [question, setQuestion] = useState('');
@@ -355,6 +387,7 @@ Gib 2-3 relevante Befehle zurück, basierend auf dieser Frage: "${q}"`;
           setResults(commands);
         } catch (err) {
           console.error('Fehler:', err);
+          alert('Fehler beim Generieren: ' + err.message);
           setResults([]);
         } finally {
           setLoading(false);
@@ -432,195 +465,159 @@ Gib 2-3 relevante Befehle zurück, basierend auf dieser Frage: "${q}"`;
         negative: lexicon.filter(c => getScore(c) < 0).length
       };
 
-      return (
-        <div className="sap-container">
-          <div className="sap-header">
-            <h1>📚 SAP Command Learner</h1>
-            <span className="sap-badge">BETA</span>
-          </div>
-
-          <div className="sap-content">
-            <form onSubmit={handleSearch}>
-              <div className="input-group">
-                <input
-                  type="text"
-                  className="sap-input"
-                  placeholder="Z.B.: Wie erstelle ich einen neuen Benutzer? oder: Welcher Befehl für Materialanlage?"
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
-                />
-                <button type="submit" className="sap-button">Suchen</button>
-              </div>
-            </form>
-
-            <div className="lexicon-stats">
-              <div className="stat-box">
-                <div className="stat-label">Befehle gelernt</div>
-                <div className="stat-value">{stats.total}</div>
-              </div>
-              <div className="stat-box">
-                <div className="stat-label">✓ Funktionieren</div>
-                <div className="stat-value" style={{color: '#2e7d32'}}>{stats.positive}</div>
-              </div>
-              <div className="stat-box">
-                <div className="stat-label">✗ Funktionieren nicht</div>
-                <div className="stat-value" style={{color: '#c62828'}}>{stats.negative}</div>
-              </div>
+      // Stats anzeigen
+      React.useEffect(() => {
+        const statsDiv = document.getElementById('stats');
+        if (statsDiv) {
+          statsDiv.innerHTML = `
+            <div class="stat-box">
+              <div class="stat-label">Befehle gelernt</div>
+              <div class="stat-value">${stats.total}</div>
             </div>
+            <div class="stat-box">
+              <div class="stat-label">✓ Funktionieren</div>
+              <div class="stat-value" style="color: #2e7d32;">${stats.positive}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">✗ Funktionieren nicht</div>
+              <div class="stat-value" style="color: #c62828;">${stats.negative}</div>
+            </div>
+          `;
+        }
+      }, [stats]);
 
-            {results.length > 0 && (
-              <>
-                <h3 style={{marginBottom: '12px', fontSize: '14px', color: '#333'}}>
-                  Vorschläge für: <strong>"{question}"</strong>
-                </h3>
-                <div className="results-grid">
-                  {results.map((cmd, idx) => {
-                    const lexEntry = lexicon.find(l => l.command === cmd.command);
-                    return (
-                      <div key={idx} className="sap-card">
-                        <div className="command-title">{cmd.command}</div>
-                        <div className="command-text">{cmd.command}</div>
-                        <div className="command-description">{cmd.description}</div>
-                        {lexEntry && (
-                          <div className="command-score">
-                            Score: {getScore(lexEntry)} ({(lexEntry.positive || 0)} ✓ / {(lexEntry.negative || 0)} ✗)
-                            <div className="score-bar">
-                              <div className="score-fill" style={{width: `${getScoreWidth(lexEntry)}%`}}></div>
-                            </div>
-                          </div>
-                        )}
-                        <div className="command-actions">
-                          <button 
-                            className="sap-button icon-button positive"
-                            onClick={() => handleFeedback(cmd.command, true)}
-                            title="Funktioniert"
-                          >
-                            ✓ OK
-                          </button>
-                          <button 
-                            className="sap-button icon-button"
-                            onClick={() => copyToClipboard(cmd.command)}
-                            title="In Zwischenablage kopieren"
-                          >
-                            📋 Kopieren
-                          </button>
-                          <button 
-                            className="sap-button icon-button negative"
-                            onClick={() => handleFeedback(cmd.command, false)}
-                            title="Funktioniert nicht"
-                          >
-                            ✗ Nein
-                          </button>
+      // Results anzeigen
+      React.useEffect(() => {
+        const resultsDiv = document.getElementById('results');
+        if (results.length > 0) {
+          resultsDiv.innerHTML = `
+            <h3 style="margin-bottom: 12px; font-size: 14px; color: #333;">
+              Vorschläge für: <strong>"${question}"</strong>
+            </h3>
+            <div class="results-grid">
+              ${results.map((cmd, idx) => {
+                const lexEntry = lexicon.find(l => l.command === cmd.command);
+                return `
+                  <div class="sap-card" key="${idx}">
+                    <div class="command-title">${cmd.command}</div>
+                    <div class="command-text">${cmd.command}</div>
+                    <div class="command-description">${cmd.description}</div>
+                    ${lexEntry ? `
+                      <div class="command-score">
+                        Score: ${getScore(lexEntry)} (${lexEntry.positive || 0} ✓ / ${lexEntry.negative || 0} ✗)
+                        <div class="score-bar">
+                          <div class="score-fill" style="width: ${getScoreWidth(lexEntry)}%"></div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-
-            {loading && <div className="loading">⏳ Befehle werden generiert...</div>}
-
-            {lexicon.length > 0 && (
-              <>
-                <h3 style={{marginBottom: '12px', fontSize: '14px', color: '#333', marginTop: '32px'}}>
-                  Dein Lexikon ({stats.total} Befehle)
-                </h3>
-                <div className="controls">
-                  <button 
-                    className={`sap-button secondary`}
-                    onClick={() => setFilter('all')}
-                    style={{backgroundColor: filter === 'all' ? '#003399' : '#e0e0e0', color: filter === 'all' ? 'white' : '#333'}}
-                  >
-                    Alle
-                  </button>
-                  <button 
-                    className={`sap-button secondary`}
-                    onClick={() => setFilter('positive')}
-                    style={{backgroundColor: filter === 'positive' ? '#2e7d32' : '#e0e0e0', color: filter === 'positive' ? 'white' : '#333'}}
-                  >
-                    ✓ Funktionieren
-                  </button>
-                  <button 
-                    className={`sap-button secondary`}
-                    onClick={() => setFilter('negative')}
-                    style={{backgroundColor: filter === 'negative' ? '#c62828' : '#e0e0e0', color: filter === 'negative' ? 'white' : '#333'}}
-                  >
-                    ✗ Fehler
-                  </button>
-                  <button 
-                    className={`sap-button secondary`}
-                    onClick={() => {
-                      if (confirm('Möchtest du das Lexikon wirklich löschen?')) {
-                        setLexicon([]);
-                        saveLexicon([]);
-                      }
-                    }}
-                  >
-                    🗑️ Zurücksetzen
-                  </button>
-                </div>
-                <div className="results-grid">
-                  {filteredLexicon.map((cmd, idx) => (
-                    <div key={idx} className="sap-card">
-                      <div className="command-title">{cmd.command}</div>
-                      <div className="command-text">{cmd.command}</div>
-                      <div className="command-description">{cmd.description}</div>
-                      <div className="command-score">
-                        Score: <strong style={{color: getScore(cmd) > 0 ? '#2e7d32' : getScore(cmd) < 0 ? '#c62828' : '#999'}}>
-                          {getScore(cmd) > 0 ? '+' : ''}{getScore(cmd)}
-                        </strong> ({(cmd.positive || 0)} ✓ / {(cmd.negative || 0)} ✗)
-                        <div className="score-bar">
-                          <div className="score-fill" style={{width: `${getScoreWidth(cmd)}%`}}></div>
-                        </div>
-                      </div>
-                      <div className="command-actions">
-                        <button 
-                          className="sap-button icon-button positive"
-                          onClick={() => handleFeedback(cmd.command, true)}
-                        >
-                          ✓
-                        </button>
-                        <button 
-                          className="sap-button icon-button"
-                          onClick={() => copyToClipboard(cmd.command)}
-                        >
-                          📋
-                        </button>
-                        <button 
-                          className="sap-button icon-button negative"
-                          onClick={() => handleFeedback(cmd.command, false)}
-                        >
-                          ✗
-                        </button>
-                      </div>
+                    ` : ''}
+                    <div class="command-actions">
+                      <button class="sap-button icon-button positive" onclick="window.handleFeedback('${cmd.command}', true)">✓ OK</button>
+                      <button class="sap-button icon-button" onclick="window.copyToClipboard('${cmd.command.replace(/'/g, "\\'")}')">📋 Kopieren</button>
+                      <button class="sap-button icon-button negative" onclick="window.handleFeedback('${cmd.command}', false)">✗ Nein</button>
                     </div>
-                  ))}
-                </div>
-                {filteredLexicon.length === 0 && (
-                  <div className="empty-state">
-                    <h3>Keine Befehle in dieser Kategorie</h3>
-                    <p>Geben Sie eine Frage ein, um neue Befehle zu lernen.</p>
                   </div>
-                )}
-              </>
-            )}
+                `;
+              }).join('')}
+            </div>
+          `;
+        } else {
+          resultsDiv.innerHTML = '';
+        }
+      }, [results]);
 
-            {!loading && results.length === 0 && lexicon.length === 0 && (
-              <div className="empty-state">
-                <h3>👋 Willkommen!</h3>
-                <p>Gib eine Frage ein, um SAP-Befehle zu entdecken und zu lernen.</p>
-                <p style={{marginTop: '12px', fontSize: '12px'}}>Die App merkt sich deine Bewertungen und wird mit der Zeit smarter.</p>
-              </div>
-            )}
-          </div>
+      // Loading anzeigen
+      React.useEffect(() => {
+        const resultsDiv = document.getElementById('results');
+        if (loading) {
+          resultsDiv.innerHTML = '<div class="loading">⏳ Befehle werden generiert...</div>';
+        }
+      }, [loading]);
 
-          {copyFeedback && <div className="copy-feedback">{copyFeedback}</div>}
-        </div>
-      );
+      // Lexicon anzeigen
+      React.useEffect(() => {
+        const lexDiv = document.getElementById('lexiconSection');
+        if (lexicon.length > 0) {
+          lexDiv.innerHTML = `
+            <h3 style="margin-bottom: 12px; font-size: 14px; color: #333; margin-top: 32px;">
+              Dein Lexikon (${stats.total} Befehle)
+            </h3>
+            <div class="controls" id="filters">
+              <button class="sap-button secondary" onclick="window.setFilter('all')" id="filter-all" style="background-color: #003399; color: white;">Alle</button>
+              <button class="sap-button secondary" onclick="window.setFilter('positive')" id="filter-positive">✓ Funktionieren</button>
+              <button class="sap-button secondary" onclick="window.setFilter('negative')" id="filter-negative">✗ Fehler</button>
+              <button class="sap-button secondary" onclick="window.resetLexicon()">🗑️ Zurücksetzen</button>
+            </div>
+            <div class="results-grid" id="lexicon-grid">
+              ${filteredLexicon.map((cmd, idx) => `
+                <div class="sap-card">
+                  <div class="command-title">${cmd.command}</div>
+                  <div class="command-text">${cmd.command}</div>
+                  <div class="command-description">${cmd.description}</div>
+                  <div class="command-score">
+                    Score: <strong style="color: ${getScore(cmd) > 0 ? '#2e7d32' : getScore(cmd) < 0 ? '#c62828' : '#999'};">
+                      ${getScore(cmd) > 0 ? '+' : ''}${getScore(cmd)}
+                    </strong> (${cmd.positive || 0} ✓ / ${cmd.negative || 0} ✗)
+                    <div class="score-bar">
+                      <div class="score-fill" style="width: ${getScoreWidth(cmd)}%"></div>
+                    </div>
+                  </div>
+                  <div class="command-actions">
+                    <button class="sap-button icon-button positive" onclick="window.handleFeedback('${cmd.command}', true)">✓</button>
+                    <button class="sap-button icon-button" onclick="window.copyToClipboard('${cmd.command.replace(/'/g, "\\'")}')">📋</button>
+                    <button class="sap-button icon-button negative" onclick="window.handleFeedback('${cmd.command}', false)">✗</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            ${filteredLexicon.length === 0 ? '<div class="empty-state"><h3>Keine Befehle in dieser Kategorie</h3></div>' : ''}
+          `;
+        }
+      }, [lexicon, filter]);
+
+      // Globale Funktionen für Buttons
+      window.handleFeedback = (command, isPositive) => handleFeedback(command, isPositive);
+      window.copyToClipboard = (text) => copyToClipboard(text);
+      window.setFilter = (f) => setFilter(f);
+      window.resetLexicon = () => {
+        if (confirm('Möchtest du das Lexikon wirklich löschen?')) {
+          setLexicon([]);
+          saveLexicon([]);
+        }
+      };
+
+      // Form handler
+      React.useEffect(() => {
+        const form = document.getElementById('searchForm');
+        if (form) {
+          form.addEventListener('submit', handleSearch);
+          return () => form.removeEventListener('submit', handleSearch);
+        }
+      }, [question]);
+
+      // Search input handler
+      React.useEffect(() => {
+        const input = document.getElementById('searchInput');
+        if (input) {
+          input.addEventListener('change', (e) => setQuestion(e.target.value));
+        }
+      }, []);
+
+      // Copy feedback
+      if (copyFeedback) {
+        const feedbackDiv = document.getElementById('feedback');
+        feedbackDiv.innerHTML = `<div class="copy-feedback">${copyFeedback}</div>`;
+        const timer = setTimeout(() => {
+          feedbackDiv.innerHTML = '';
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+
+      return null;
     }
 
-    ReactDOM.render(<SAPCommandLearner />, document.getElementById('root'));
+    // Starte App wenn React ready ist
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(SAPCommandLearner));
   </script>
 </body>
 </html>
