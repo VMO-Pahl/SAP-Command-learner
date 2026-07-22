@@ -337,7 +337,7 @@
           setLoading(true);
           try {
             // Für lokales Testen: Verwende localhost
-            const apiUrl = 'http://localhost:3001/api/generate-commands';
+            const apiUrl = 'http://sap-command-learner.vercel.app//api/generate-commands';
 
             const response = await fetch(apiUrl, {
               method: 'POST',
